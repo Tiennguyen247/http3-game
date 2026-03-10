@@ -1,0 +1,10 @@
+{
+  "name": "quic-clicker-http3-demo",
+  "version": "1.0.0",
+  "description": "HTTP/3 demo game",
+  "scripts": {
+    "cert": "node gen-cert.js",
+    "start": "node server/server.js"
+  },
+  "license": "MIT"
+}
