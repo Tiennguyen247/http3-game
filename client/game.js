@@ -1,29 +1,5 @@
-/**
- * =====================================================================
- *  QUIC CLICKER — game.js
- *  HTTP/3 Demo Game — Client Side
- * =====================================================================
- *
- *  HOW HTTP/3 IS USED HERE:
- *  ─
- *  All fetch() calls in this file go to https://localhost:4433
- *  The server at that address speaks HTTP/3 (via node-h3-server or
- *  the h3/node:http2 + ALPN trick).
- *
- *  Modern browsers (Chrome/Edge/Firefox) will automatically
- *  negotiate HTTP/3 if:
- *    1. Server sends "Alt-Svc: h3=\":4433\"" header (server.js does this)
- *    2. The connection uses TLS (our self-signed cert)
- *    3. The browser supports h3 (all modern browsers do)
- *
- *  You can verify in DevTools → Network → Protocol column = "h3"
- * =====================================================================
- */
-
-//  CONFIGURATION
-// Change this to match your server address.
-// The server MUST use HTTPS because QUIC requires TLS.
-const SERVER_BASE = "https://localhost:8443";
+// Tự động dùng domain Railway khi deploy, localhost khi dev
+const SERVER_BASE = window.location.origin;
 
 // Game settings
 const GAME_DURATION = 10; // seconds per round
