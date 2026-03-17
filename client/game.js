@@ -8,7 +8,7 @@
  */
 
 // ── CONFIG ──────────────────────────────────────────────
-const SERVER_BASE = window.location.origin;
+const SERVER_BASE = globalThis.location.origin;
 const GAME_DURATION = 60; // giây
 
 // ── TỪ VỰNG CNTT ────────────────────────────────────────
@@ -137,8 +137,7 @@ function logPacket(method, path, status) {
     `<span class="method">${method}</span> ${path} ` +
     `→ <span class="status">${status}</span>`;
   feedItems.insertBefore(el, feedItems.firstChild);
-  while (feedItems.children.length > 3)
-    feedItems.removeChild(feedItems.lastChild);
+  while (feedItems.children.length > 3) feedItems.lastChild.remove();
 }
 
 function delay(ms) {
@@ -146,7 +145,10 @@ function delay(ms) {
 }
 
 function escapeHTML(s) {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;");
 }
 
 function markStep(el, state) {
@@ -451,6 +453,7 @@ async function fetchLeaderboard() {
     console.log("[HTTP/3] Leaderboard fetched:", data);
     renderLeaderboard(data.scores || []);
   } catch (err) {
+    console.warn("[HTTP/3] Leaderboard fetch failed:", err.message);
     lbList.innerHTML =
       '<div class="lb-loading" style="color:var(--red)">Server offline</div>';
   }
@@ -466,8 +469,11 @@ function renderLeaderboard(scores) {
     const rank = i + 1;
     const row = document.createElement("div");
     row.className = `lb-row rank-${rank}`;
-    const medal =
-      rank === 1 ? "🥇" : rank === 2 ? "🥈" : rank === 3 ? "🥉" : `#${rank}`;
+    let medal;
+    if (rank === 1) medal = "🥇";
+    else if (rank === 2) medal = "🥈";
+    else if (rank === 3) medal = "🥉";
+    else medal = `#${rank}`;
     row.innerHTML = `
       <span class="lb-rank">${medal}</span>
       <span class="lb-name">${escapeHTML(e.name)}</span>
@@ -494,13 +500,15 @@ document
   .addEventListener("click", fetchLeaderboard);
 
 // ── INIT ──────────────────────────────────────────────────
-fetchLeaderboard();
+(async () => {
+  await fetchLeaderboard();
 
-console.log(
-  "%c[TYPE//NET] HTTP/3 Typing Game Loaded",
-  "color:#00ff88;font-family:monospace;font-size:14px",
-);
-console.log(
-  '%cDevTools → Network → Protocol = "h3"',
-  "color:#00eeff;font-family:monospace",
-);
+  console.log(
+    "%c[TYPE//NET] HTTP/3 Typing Game Loaded",
+    "color:#00ff88;font-family:monospace;font-size:14px",
+  );
+  console.log(
+    '%cDevTools → Network → Protocol = "h3"',
+    "color:#00eeff;font-family:monospace",
+  );
+})();
