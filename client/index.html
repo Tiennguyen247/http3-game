@@ -3,42 +3,31 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>QUIC Clicker — HTTP/3 Demo Game</title>
+    <title>TYPE//NET — HTTP/3 Typing Game</title>
     <link rel="stylesheet" href="style.css" />
-    <!-- Google Fonts: Orbitron (display) + Share Tech Mono (body) -->
     <link
       href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <!-- =============================================
-       QUIC CLICKER — HTTP/3 Demo Game
-       A Click-Speed game that demonstrates HTTP/3:
-         • Scores are submitted via HTTP/3 (QUIC)
-         • Leaderboard is fetched via HTTP/3 (QUIC)
-         • DevTools Network tab shows protocol = "h3"
-  ============================================= -->
-
     <div class="scanlines"></div>
 
     <div class="container">
-      <!-- HEADER -->
       <header>
         <div class="logo">
-          <span class="logo-q">Q</span>UIC<span class="logo-clicker">
-            CLICKER</span
-          >
+          TYPE<span class="logo-slash">//</span
+          ><span class="logo-net">NET</span>
         </div>
-        <div class="protocol-badge" id="protocolBadge">
+        <div class="protocol-badge">
           <span class="dot"></span> HTTP/3 · QUIC
         </div>
       </header>
 
-      <!-- MAIN LAYOUT: Game Left | Leaderboard Right -->
       <main>
         <!-- ── GAME PANEL ── -->
         <section class="game-panel">
+          <!-- SETUP -->
           <div class="player-setup" id="playerSetup">
             <p class="label">ENTER CALLSIGN</p>
             <input
@@ -51,6 +40,7 @@
             <button class="btn-primary" id="startBtn">LAUNCH GAME</button>
           </div>
 
+          <!-- GAME AREA -->
           <div class="game-area" id="gameArea" style="display: none">
             <div class="hud">
               <div class="hud-item">
@@ -59,40 +49,70 @@
               </div>
               <div class="hud-item timer-box">
                 <span class="hud-label">TIME</span>
-                <span class="hud-value" id="timerDisplay">10</span>
+                <span class="hud-value" id="timerDisplay">60</span>
               </div>
               <div class="hud-item">
-                <span class="hud-label">PLAYER</span>
-                <span class="hud-value" id="playerDisplay">—</span>
+                <span class="hud-label">WPM</span>
+                <span class="hud-value" id="wpmDisplay">0</span>
+              </div>
+              <div class="hud-item">
+                <span class="hud-label">ACC</span>
+                <span class="hud-value" id="accDisplay">100%</span>
               </div>
             </div>
 
-            <!-- THE BIG CLICK TARGET -->
-            <div class="target-area">
-              <button class="click-target" id="clickTarget">
-                <span class="target-inner">
-                  <span class="target-label">CLICK!</span>
-                  <span class="target-sub">+1 QUIC PACKET</span>
-                </span>
-                <div class="ripple-ring"></div>
-              </button>
+            <!-- WORD DISPLAY -->
+            <div class="word-area">
+              <div class="current-word-box">
+                <span class="word-label">TYPE THIS WORD</span>
+                <div class="current-word" id="currentWord">—</div>
+                <div class="word-category" id="wordCategory"></div>
+              </div>
+
+              <div class="input-wrap">
+                <input
+                  type="text"
+                  id="typingInput"
+                  placeholder="start typing..."
+                  autocomplete="off"
+                  autocorrect="off"
+                  autocapitalize="off"
+                  spellcheck="false"
+                />
+              </div>
+
+              <!-- 3 từ tiếp theo -->
+              <div class="word-queue-label">NEXT WORDS</div>
+              <div class="word-queue" id="wordQueue"></div>
             </div>
 
-            <!-- PACKET FEED: simulates QUIC stream activity -->
-            <div class="packet-feed" id="packetFeed">
+            <!-- QUIC LOG -->
+            <div class="packet-feed">
               <span class="feed-label">▶ QUIC STREAM LOG</span>
               <div class="feed-items" id="feedItems"></div>
             </div>
           </div>
 
-          <!-- RESULT SCREEN (shown after game ends) -->
+          <!-- RESULT -->
           <div class="result-screen" id="resultScreen" style="display: none">
-            <div class="result-title">ROUND COMPLETE</div>
-            <div class="result-score-label">YOUR SCORE</div>
-            <div class="result-score" id="finalScore">0</div>
+            <div class="result-title">SESSION COMPLETE</div>
 
-            <!-- HTTP/3 status during score submission -->
-            <div class="http-status" id="httpStatus">
+            <div class="result-stats">
+              <div class="stat-box">
+                <span class="stat-label">SCORE</span>
+                <span class="stat-value green" id="finalScore">0</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">WPM</span>
+                <span class="stat-value cyan" id="finalWpm">0</span>
+              </div>
+              <div class="stat-box">
+                <span class="stat-label">ACCURACY</span>
+                <span class="stat-value yellow" id="finalAcc">0%</span>
+              </div>
+            </div>
+
+            <div class="http-status">
               <div class="http-row" id="httpStep1">
                 <span class="http-icon">◌</span>
                 <span>Opening QUIC Connection (0-RTT)…</span>
@@ -111,53 +131,37 @@
           </div>
         </section>
 
-        <!-- ── LEADERBOARD PANEL ── -->
+        <!-- ── LEADERBOARD ── -->
         <aside class="leaderboard-panel">
           <div class="lb-header">
             <span class="lb-title">LEADERBOARD</span>
-            <!-- This fetch is HTTP/3 — see game.js fetchLeaderboard() -->
-            <button
-              class="btn-refresh"
-              id="refreshBtn"
-              title="Fetches via GET /leaderboard over HTTP/3"
-            >
-              ↻
-            </button>
+            <button class="btn-refresh" id="refreshBtn">↻</button>
           </div>
           <div class="lb-list" id="lbList">
             <div class="lb-loading">Fetching via HTTP/3…</div>
           </div>
-          <div class="lb-footer">
-            <span>GET /leaderboard · HTTP/3</span>
-          </div>
+          <div class="lb-footer">GET /leaderboard · HTTP/3</div>
         </aside>
       </main>
 
-      <!-- HTTP/3 INFO STRIP -->
       <footer class="info-strip">
         <div class="info-item">
-          <span class="info-icon">⚡</span>
-          <span>0-RTT Resumption</span>
+          <span class="info-icon">⚡</span><span>0-RTT Resumption</span>
         </div>
         <div class="info-item">
-          <span class="info-icon">🔀</span>
-          <span>Stream Multiplexing</span>
+          <span class="info-icon">🔀</span><span>Stream Multiplexing</span>
         </div>
         <div class="info-item">
-          <span class="info-icon">🔒</span>
-          <span>TLS 1.3 Built-in</span>
+          <span class="info-icon">🔒</span><span>TLS 1.3 Built-in</span>
         </div>
         <div class="info-item">
-          <span class="info-icon">📦</span>
-          <span>UDP / QUIC Transport</span>
+          <span class="info-icon">📦</span><span>UDP / QUIC</span>
         </div>
         <div class="info-item">
-          <span class="info-icon">🚫</span>
-          <span>No Head-of-Line Block</span>
+          <span class="info-icon">🚫</span><span>No HOL Blocking</span>
         </div>
       </footer>
     </div>
-    <!-- /container -->
 
     <script src="game.js"></script>
   </body>
